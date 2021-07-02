@@ -18,7 +18,7 @@ models = [
 weight_dir = Path('./weights')
 
 
-def sample(image, sample_rate):
+def sample(image, sample_rate, mode):
 
     # Setup input
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -40,12 +40,16 @@ def sample(image, sample_rate):
         heatmaps[mod] = to_pil_image(hmap.squeeze(0))
         samplemaps[mod] = to_pil_image(smap.squeeze(0))
 
-    return samplemaps.values()
+    return samplemaps.values() if mode == 'Sample maps' else heatmaps.values()
 
 
 iface = gr.Interface(
     fn=sample,
-    inputs=[gr.inputs.Image(shape=(224, 224)), gr.inputs.Slider(0., 1.)],
+    inputs=[
+        gr.inputs.Image(shape=(224, 224)),
+        gr.inputs.Slider(0, 1.),
+        gr.inputs.Radio(['Proability maps', 'Sample maps'])
+    ],
     outputs=[gr.outputs.Image("pil", label=mod) for mod in models]
 )
-iface.launch(share=True)
+iface.launch(share=False)

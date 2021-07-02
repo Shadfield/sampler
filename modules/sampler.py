@@ -1,5 +1,4 @@
 
-import sys
 from collections import namedtuple
 
 import torch
@@ -30,20 +29,6 @@ def distance_to_probability(dist):
     return 1 - torch.exp(-dist / dist.var())
 
 
-class TaskSample(nn.Module):
-    def __init__(self, task_model, sampler):
-        super().__init__()
-        self.task_model = task_model
-        self.sampler = globals()[sampler]()
-
-    def forward(self, img, *args, **kwargs):
-        heat_map, sample_map = self.sampler(img)
-        img = img * sample_map
-        result = self.task_model(img, *args, **kwargs)
-
-        return Result(img, result, heat_map, sample_map)
-
-
 class SamplerBase(nn.Module):
     def __init__(self):
         super().__init__()
@@ -52,14 +37,6 @@ class SamplerBase(nn.Module):
     def forward(self, img):
         sample_map = torch.ones_like(img)[:, 0, None]
         return sample_map, sample_map
-
-
-class Edge(SamplerBase):
-    def forward(self, img):
-        heatmap = sobel(img)
-        heatmap = normalize_min_max(heatmap)
-        sample_map = binariser(heatmap, self.droprate)
-        return heatmap, sample_map
 
 
 class Downsample(SamplerBase):
